@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8" />
@@ -29,7 +29,7 @@
         .frame {
             height: 100vh;
             display: grid;
-            grid-template-columns: clamp(120px, 16vw, 320px) 1fr clamp(120px, 16vw, 320px);
+            grid-template-columns: clamp(180px, 20vw, 400px) 1fr clamp(180px, 20vw, 400px);
             gap: 12px;
             background: #000;
         }
@@ -42,7 +42,7 @@
             background: #000;
         }
         .widescreen {
-            width: 140%;
+            width: 160%;
             aspect-ratio: 16/9;
         }
         .widescreen img {
@@ -70,64 +70,6 @@
             touch-action: none;
         }
 
-        /* === MOBILE CONTROLS === */
-        .controls {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 90%;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        .joystick {
-            width: 120px;
-            height: 120px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            background: rgba(255,255,255,0.05);
-            position: relative;
-            pointer-events: auto;
-        }
-        .stick {
-            width: 50px;
-            height: 50px;
-            background: rgba(255,255,255,0.6);
-            border-radius: 50%;
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            transition: top 0.05s, left 0.05s;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 12px;
-            pointer-events: auto;
-        }
-
-        .btn {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid rgba(255,255,255,0.3);
-            color: #fff;
-            font-weight: bold;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
-        }
-        .btn:active {
-            background: rgba(255,255,255,0.4);
-        }
-
         @media (max-width: 800px) {
             .frame {
                 grid-template-columns: 0fr 1fr 0fr;
@@ -145,17 +87,6 @@
 
     <div id="c2canvasdiv">
         <canvas id="c2canvas" width="256" height="224"></canvas>
-
-        <!-- MOBILE CONTROLS -->
-        <div class="controls" id="controls">
-            <div class="joystick" id="joystick">
-                <div class="stick" id="stick"></div>
-            </div>
-            <div class="buttons">
-                <div class="btn" id="runBtn">RUN</div>
-                <div class="btn" id="jumpBtn">JUMP</div>
-            </div>
-        </div>
     </div>
 
     <aside class="sidebar right">
@@ -172,7 +103,6 @@ jQuery(document).ready(function () {
     cr_createRuntime("c2canvas");
 });
 
-// Visibility change
 function onVisibilityChanged() {
     if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
         cr_setSuspended(true);
@@ -184,7 +114,6 @@ document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
 document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
 document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
 
-// Service Worker
 function OnRegisterSWError(e){console.warn("Failed to register service worker:",e);}
 window.C2_RegisterSW=function(){
     if(!navigator.serviceWorker)return;
@@ -192,61 +121,6 @@ window.C2_RegisterSW=function(){
     .then(r=>console.log("Registered service worker:",r.scope))
     .catch(OnRegisterSWError);
 };
-
-// ============ MOBILE CONTROLS ================
-const stick = document.getElementById('stick');
-const joy = document.getElementById('joystick');
-let joyActive = false;
-let joyStart = {x:0, y:0};
-
-function simulateKey(keyCode, type){
-    const event = new KeyboardEvent(type, { keyCode: keyCode, which: keyCode });
-    document.dispatchEvent(event);
-}
-
-joy.addEventListener('touchstart', e => {
-    joyActive = true;
-    const t = e.touches[0];
-    joyStart = {x: t.clientX, y: t.clientY};
-});
-joy.addEventListener('touchmove', e => {
-    if(!joyActive) return;
-    const t = e.touches[0];
-    let dx = t.clientX - joyStart.x;
-    let dy = t.clientY - joyStart.y;
-    const dist = Math.min(40, Math.hypot(dx, dy));
-    const angle = Math.atan2(dy, dx);
-    const x = 35 + dist * Math.cos(angle);
-    const y = 35 + dist * Math.sin(angle);
-    stick.style.left = x + 'px';
-    stick.style.top = y + 'px';
-
-    // simulate arrow keys
-    if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 10) simulateKey(39, 'keydown'); // right
-        else if (dx < -10) simulateKey(37, 'keydown'); // left
-    } else {
-        if (dy > 10) simulateKey(40, 'keydown'); // down
-        else if (dy < -10) simulateKey(38, 'keydown'); // up
-    }
-});
-joy.addEventListener('touchend', e => {
-    joyActive = false;
-    stick.style.left = '35px';
-    stick.style.top = '35px';
-    // release all arrows
-    [37,38,39,40].forEach(k=>simulateKey(k,'keyup'));
-});
-
-// Buttons
-function bindButton(id, keyCode){
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', ()=>simulateKey(keyCode,'keydown'));
-    el.addEventListener('touchend', ()=>simulateKey(keyCode,'keyup'));
-}
-
-bindButton('jumpBtn', 88); // X key
-bindButton('runBtn', 90);  // Z key
 </script>
 </body>
 </html>
